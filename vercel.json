@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/**/*.ts": {
+    "api/audit.ts": {
+      "runtime": "nodejs18.x"
+    },
+    "api/audit/route.ts": {
       "runtime": "nodejs18.x"
     }
   }
