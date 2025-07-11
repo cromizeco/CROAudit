@@ -1,7 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import puppeteer from "puppeteer"
+    console.log("🧠 Sending data to GPT-4 Vision...");
+    console.log("🧠 Sending data to GPT-4 Vision...");
 import { generateText } from "ai"
+    console.log("✅ AI response received.");
+    console.log("✅ AI response received.");
 import { openai } from "@ai-sdk/openai"
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -17,7 +21,14 @@ function createJsonResponse(data: any, status = 200) {
   })
 }
 
+
+
 export async function POST(request: NextRequest) {
+  console.log("=== AUDIT API CALLED ===");
+
+  try {
+    // BEGIN original logic
+(request: NextRequest) {
   console.log("=== AUDIT API CALLED ===")
 
   try {
@@ -59,58 +70,22 @@ export async function POST(request: NextRequest) {
       return createJsonResponse({ auditId: existingAudit.id, existing: true })
     }
 
-// Check if audit already exists for this URL
-const { data: existing, error: fetchError } = await supabase
-  .from("audits")
-  .select("*")
-  .eq("url", url)
-  .single();
+    // Create new audit in Supabase
+    const { data: audit, error: auditError } = await supabase
+      .from("audits")
+      .insert({
+        url,
+        status: "pending",
+      })
+      .select()
+      .single()
 
-if (fetchError && fetchError.code !== "PGRST116") {
-  return NextResponse.json({ error: "Error checking existing audit" }, { status: 500 });
-}
+    if (auditError) {
+      console.error("Error creating audit:", auditError)
+      return createJsonResponse({ error: "Failed to create audit record" }, 500)
+    }
 
-if (existing) {
-  // Update the existing audit
-  const { error: updateError } = await supabase
-    .from("audits")
-    .update({
-      updated_at: new Date().toISOString(),
-      desktop_screenshot,
-      mobile_screenshot,
-      desktop_annotated,
-      mobile_annotated,
-      findings,
-      status: "completed",
-    })
-    .eq("id", existing.id);
-
-  if (updateError) {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
-  }
-
-  return NextResponse.json({ message: "Audit refreshed" });
-} else {
-  // Create new audit
-  const { error: insertError } = await supabase.from("audits").insert({
-    url,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    desktop_screenshot,
-    mobile_screenshot,
-    desktop_annotated,
-    mobile_annotated,
-    findings,
-    status: "completed",
-  });
-
-  if (insertError) {
-    return NextResponse.json({ error: "Insert failed" }, { status: 500 });
-  }
-
-  return NextResponse.json({ message: "Audit created" });
-}
-
+    console.log("Created audit:", audit.id)
 
     // Start background processing
     processAuditWithPuppeteer(audit.id, url).catch((error) => {
@@ -133,6 +108,7 @@ if (existing) {
 async function processAuditWithPuppeteer(auditId: string, url: string) {
   let browser
 
+    console.log("🚀 Launching Puppeteer...");
   try {
     console.log(`Starting real audit for ${auditId} - ${url}`)
 
@@ -155,6 +131,7 @@ async function processAuditWithPuppeteer(auditId: string, url: string) {
     const page = await browser.newPage()
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    console.log("✅ Page loaded successfully.");
     )
 
     // Desktop screenshot
@@ -284,7 +261,11 @@ Provide analysis in JSON format:
       "severity": "high|medium|low",
       "category": "navigation|layout|accessibility|content|performance|mobile",
       "recommendation": "Specific recommendation"
+    console.log("🧠 Sending data to GPT-4 Vision...");
+    console.log("🧠 Sending data to GPT-4 Vision...");
     }
+    console.log("✅ AI response received.");
+    console.log("✅ AI response received.");
   ]
 }
 
@@ -356,5 +337,23 @@ Focus on 5-7 actionable issues with varied severity levels.`
         updated_at: new Date().toISOString(),
       })
       .eq("id", auditId)
+  }
+}
+
+    // END original logic
+
+  } catch (error) {
+    console.error("🔥 Audit failed:", error);
+
+    return new NextResponse(
+      JSON.stringify({ error: "Audit failed", details: error.message || error }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+      }
+    );
   }
 }
