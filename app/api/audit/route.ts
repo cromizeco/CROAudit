@@ -138,6 +138,15 @@ export async function POST(request: NextRequest) {
         console.error("❌ Insert failed:", insertError)
         return createJsonResponse({ error: "Failed to save audit" }, 500)
       }
+      
+      console.log("📝 Inserting audit:", {
+      url,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    desktop_screenshot: publicUrl,
+    findings,
+    status: "completed",
+    })
 
       return createJsonResponse({ message: "Audit created", auditId: insertData.id })
     }
