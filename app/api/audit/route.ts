@@ -59,22 +59,58 @@ export async function POST(request: NextRequest) {
       return createJsonResponse({ auditId: existingAudit.id, existing: true })
     }
 
-    // Create new audit in Supabase
-    const { data: audit, error: auditError } = await supabase
-      .from("audits")
-      .insert({
-        url,
-        status: "pending",
-      })
-      .select()
-      .single()
+// Check if audit already exists for this URL
+const { data: existing, error: fetchError } = await supabase
+  .from("audits")
+  .select("*")
+  .eq("url", url)
+  .single();
 
-    if (auditError) {
-      console.error("Error creating audit:", auditError)
-      return createJsonResponse({ error: "Failed to create audit record" }, 500)
-    }
+if (fetchError && fetchError.code !== "PGRST116") {
+  return NextResponse.json({ error: "Error checking existing audit" }, { status: 500 });
+}
 
-    console.log("Created audit:", audit.id)
+if (existing) {
+  // Update the existing audit
+  const { error: updateError } = await supabase
+    .from("audits")
+    .update({
+      updated_at: new Date().toISOString(),
+      desktop_screenshot,
+      mobile_screenshot,
+      desktop_annotated,
+      mobile_annotated,
+      findings,
+      status: "completed",
+    })
+    .eq("id", existing.id);
+
+  if (updateError) {
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: "Audit refreshed" });
+} else {
+  // Create new audit
+  const { error: insertError } = await supabase.from("audits").insert({
+    url,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    desktop_screenshot,
+    mobile_screenshot,
+    desktop_annotated,
+    mobile_annotated,
+    findings,
+    status: "completed",
+  });
+
+  if (insertError) {
+    return NextResponse.json({ error: "Insert failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ message: "Audit created" });
+}
+
 
     // Start background processing
     processAuditWithPuppeteer(audit.id, url).catch((error) => {
