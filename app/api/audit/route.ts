@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
-import puppeteer from "puppeteer-core"
 import chromium from "@sparticuz/chromium"
+import puppeteer from "puppeteer-core"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -51,12 +51,13 @@ export async function POST(request: NextRequest) {
       return createJsonResponse({ auditId: recentAudit.id })
     }
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    })
+console.log("🚀 Launching Chromium via @sparticuz/chromium")
+const browser = await puppeteer.launch({
+  args: chromium.args,
+  defaultViewport: chromium.defaultViewport,
+  executablePath: await chromium.executablePath(),
+  headless: chromium.headless,
+})
 
     const page = await browser.newPage()
     await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/114 Safari/537.36")
