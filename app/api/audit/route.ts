@@ -52,12 +52,22 @@ export async function POST(request: NextRequest) {
     }
 
 console.log("🚀 Launching Chromium via @sparticuz/chromium")
-const browser = await puppeteer.launch({
-  args: chromium.args,
-  defaultViewport: chromium.defaultViewport,
-  executablePath: await chromium.executablePath(),
-  headless: chromium.headless,
-})
+
+let browser
+try {
+  browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  })
+} catch (err) {
+  console.error("❌ Chromium failed to launch:", err)
+  return createJsonResponse({
+    error: "Chromium failed to launch",
+    details: err instanceof Error ? err.message : "Unknown error"
+  }, 500)
+}
 
     const page = await browser.newPage()
     await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/114 Safari/537.36")
