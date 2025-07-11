@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
     "postinstall": "node node_modules/@sparticuz/chromium/install.js"
   },
   "dependencies": {
