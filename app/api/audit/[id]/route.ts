@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const auditId = params.id;
 
@@ -8,9 +10,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   if (!UUID_REGEX.test(auditId)) {
     return NextResponse.json({ error: "Invalid audit ID format" }, { status: 400 });
   }
-
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 function createJsonResponse(data: any, status = 200) {
   return new NextResponse(JSON.stringify(data), {
