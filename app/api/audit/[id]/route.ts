@@ -1,9 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-if (!UUID_REGEX.test(auditId)) {
-  return NextResponse.json({ error: 'Invalid audit ID format' }, { status: 400 });
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const auditId = params.id;
+
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!UUID_REGEX.test(auditId)) {
+    return NextResponse.json({ error: "Invalid audit ID format" }, { status: 400 });
+  }
+
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("audits")
+    .select("*")
+    .eq("id", auditId)
+    .single();
+
+  if (error) {
+    console.error("Supabase fetch error:", error.message);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
 }
 
 
